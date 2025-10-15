@@ -1,108 +1,117 @@
-import { useState } from "react";
+"use client";
+
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Smartphone, KeyRound } from "lucide-react";
+import { Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { auth } from "@/lib/firebase";
+import { sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from "firebase/auth";
 
 const Auth = () => {
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [otp, setOtp] = useState("");
-  const [showOtp, setShowOtp] = useState(false);
+  const [email, setEmail] = useState("");
+  const [linkSent, setLinkSent] = useState(false);
   const { toast } = useToast();
 
-  const handleSendOtp = (e: React.FormEvent) => {
+  // ✅ Send email link
+  const handleSendLink = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!phoneNumber.match(/^254\d{9}$/)) {
+
+    if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
       toast({
-        title: "Invalid phone number",
-        description: "Please enter a valid Kenyan phone number (254XXXXXXXXX)",
+        title: "Invalid email",
+        description: "Please enter a valid email address.",
         variant: "destructive",
       });
       return;
     }
 
-    // TODO: Integrate with Firebase Auth
-    setShowOtp(true);
-    toast({
-      title: "OTP Sent",
-      description: `Verification code sent to ${phoneNumber}`,
-    });
+    const actionCodeSettings = {
+      url: window.location.origin, // where to redirect after click
+      handleCodeInApp: true,
+    };
+
+    try {
+      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+      window.localStorage.setItem("emailForSignIn", email);
+      setLinkSent(true);
+      toast({
+        title: "Email Sent",
+        description: `A sign-in link has been sent to ${email}`,
+      });
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleVerifyOtp = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // TODO: Verify OTP with Firebase
-    toast({
-      title: "Success!",
-      description: "Welcome to MobiClinic",
-    });
-  };
+  // ✅ Handle returning via email link
+  useEffect(() => {
+    const handleEmailLinkSignIn = async () => {
+      if (isSignInWithEmailLink(auth, window.location.href)) {
+        let storedEmail = window.localStorage.getItem("emailForSignIn");
+
+        if (!storedEmail) {
+          storedEmail = window.prompt("Please confirm your email for sign-in") || "";
+        }
+
+        try {
+          await signInWithEmailLink(auth, storedEmail, window.location.href);
+          window.localStorage.removeItem("emailForSignIn");
+          toast({
+            title: "Success!",
+            description: "Your email has been verified. Welcome to MobiClinic!",
+          });
+        } catch (err: any) {
+          toast({
+            title: "Sign-in failed",
+            description: err.message,
+            variant: "destructive",
+          });
+        }
+      }
+    };
+
+    handleEmailLinkSignIn();
+  }, [toast]);
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-primary/5 via-background to-accent/5">
       <Card className="w-full max-w-md shadow-[var(--shadow-card)]">
         <CardHeader className="space-y-3">
           <div className="mx-auto w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-[var(--shadow-primary)]">
-            <Smartphone className="w-8 h-8 text-primary-foreground" />
+            <Mail className="w-8 h-8 text-primary-foreground" />
           </div>
           <CardTitle className="text-2xl text-center">Welcome to MobiClinic</CardTitle>
           <CardDescription className="text-center">
-            {showOtp ? "Enter the verification code sent to your phone" : "Enter your phone number to get started"}
+            {linkSent
+              ? "Check your inbox for the verification link."
+              : "Enter your email to receive a sign-in link"}
           </CardDescription>
         </CardHeader>
+
         <CardContent>
-          {!showOtp ? (
-            <form onSubmit={handleSendOtp} className="space-y-4">
+          {!linkSent && (
+            <form onSubmit={handleSendLink} className="space-y-4">
               <div className="space-y-2">
-                <label htmlFor="phone" className="text-sm font-medium">
-                  Phone Number
+                <label htmlFor="email" className="text-sm font-medium">
+                  Email Address
                 </label>
                 <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="254712345678"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="text-lg"
                 />
-                <p className="text-xs text-muted-foreground">
-                  Enter your Kenyan mobile number (254...)
-                </p>
               </div>
               <Button type="submit" className="w-full bg-gradient-to-r from-primary to-primary/90 shadow-[var(--shadow-primary)]">
-                Send Verification Code
-              </Button>
-            </form>
-          ) : (
-            <form onSubmit={handleVerifyOtp} className="space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="otp" className="text-sm font-medium flex items-center gap-2">
-                  <KeyRound className="w-4 h-4" />
-                  Verification Code
-                </label>
-                <Input
-                  id="otp"
-                  type="text"
-                  placeholder="123456"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                  maxLength={6}
-                  className="text-lg text-center tracking-widest"
-                />
-              </div>
-              <Button type="submit" className="w-full bg-gradient-to-r from-primary to-primary/90 shadow-[var(--shadow-primary)]">
-                Verify & Continue
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                className="w-full"
-                onClick={() => setShowOtp(false)}
-              >
-                Change Phone Number
+                Send Sign-in Link
               </Button>
             </form>
           )}

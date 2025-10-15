@@ -1,8 +1,30 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
+    /* Basic Options */
+    "target": "ESNext",                       // modern JS output
+    "module": "ESNext",                       // for ESM builds
+    "jsx": "react-jsx",                       // 👈 REQUIRED for .tsx / JSX support
+
+    /* Path Aliases */
+    "baseUrl": ".",                           // base directory for paths
     "paths": {
-      "@/*": ["src/*"]
-    }
-  }
+      "@/*": ["src/*"]                        // import alias @/ maps to /src
+    },
+
+    /* Module Resolution */
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+
+    /* Type Checking */
+    "strict": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* Allow TS + JSX in same project */
+    "allowJs": true
+  },
+  "include": ["src"],                         // compile everything inside src/
+  "exclude": ["node_modules"]                 // ignore node_modules
 }
