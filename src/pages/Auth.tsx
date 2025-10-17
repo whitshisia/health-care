@@ -1,20 +1,37 @@
+// src/pages/Auth.tsx
 "use client";
 
 import { useState, useEffect } from "react";
+import { Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mail } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import {
+  sendSignInLinkToEmail,
+  isSignInWithEmailLink,
+  signInWithEmailLink,
+} from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from "firebase/auth";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [linkSent, setLinkSent] = useState(false);
   const { toast } = useToast();
 
-  // ✅ Send email link
+  // Action code settings for Firebase email link
+  const actionCodeSettings = {
+    url: `${window.location.origin}/finishSignIn`, // Redirect after email click
+    handleCodeInApp: true,
+  };
+
+  // ✅ Send sign-in link
   const handleSendLink = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -26,11 +43,6 @@ const Auth = () => {
       });
       return;
     }
-
-    const actionCodeSettings = {
-      url: window.location.origin, // where to redirect after click
-      handleCodeInApp: true,
-    };
 
     try {
       await sendSignInLinkToEmail(auth, email, actionCodeSettings);
@@ -110,7 +122,10 @@ const Auth = () => {
                   className="text-lg"
                 />
               </div>
-              <Button type="submit" className="w-full bg-gradient-to-r from-primary to-primary/90 shadow-[var(--shadow-primary)]">
+              <Button
+                type="submit"
+                className="w-full bg-gradient-to-r from-primary to-primary/90 shadow-[var(--shadow-primary)]"
+              >
                 Send Sign-in Link
               </Button>
             </form>

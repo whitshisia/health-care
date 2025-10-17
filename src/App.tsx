@@ -10,7 +10,7 @@ import BookConsultation from "./pages/BookConsultation";
 import Prescriptions from "./pages/Prescriptions";
 import Orders from "./pages/Orders";
 import NotFound from "./pages/NotFound";
-
+import FinishSignIn from "./pages/FinishSignIn";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -22,6 +22,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/finishSignIn" element={<FinishSignIn />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/book" element={<BookConsultation />} />
           <Route path="/prescriptions" element={<Prescriptions />} />
